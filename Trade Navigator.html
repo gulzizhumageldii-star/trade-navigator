@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trade Navigator — Explore. Connect. Trade.</title>
+<style>
+:root{--bg:#faf8f3;--card:#fff;--tx:#1d2330;--mut:#667085;--bd:#e5e2d9;--a:#0f8b8d;--a2:#f2a541;--r:16px;--f:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#12161d;--card:#1b212b;--tx:#eef1f6;--mut:#9aa4b5;--bd:#2c3441;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12161d;--card:#1b212b;--tx:#eef1f6;--mut:#9aa4b5;--bd:#2c3441;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--f);line-height:1.55}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 20px;border-bottom:1px solid var(--bd);background:var(--card)}
+.logo{font-weight:800;font-size:1.15rem;margin-right:auto}.logo span{color:var(--a)}
+nav{display:flex;gap:6px;flex-wrap:wrap}
+nav a{padding:7px 12px;border-radius:99px;text-decoration:none;color:var(--tx);font-size:.9rem;border:1px solid transparent}
+nav a.on{background:var(--a);color:#fff}
+nav a:hover:not(.on){border-color:var(--a)}
+main{max-width:980px;margin:0 auto;padding:24px 20px 90px}
+.view{display:none}.view.on{display:block}
+.hero{border-radius:calc(var(--r) + 8px);padding:44px 28px;color:#fff;background:linear-gradient(135deg,var(--a),var(--a2))}
+.hero h1{font-size:clamp(2rem,6vw,3.4rem);margin:0 0 6px;line-height:1.1}
+.hero p{max-width:560px;font-size:1.1rem;margin:8px 0 20px}
+.btn{display:inline-block;border:0;cursor:pointer;background:var(--a);color:#fff;padding:10px 18px;border-radius:99px;font:inherit;font-weight:600;text-decoration:none}
+.hero .btn{background:#fff;color:#1d2330}
+.btn.alt{background:transparent;color:var(--tx);border:1px solid var(--bd)}
+h2{margin:0 0 4px}.sub{color:var(--mut);margin:0 0 18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:20px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:18px}
+.card h3{margin:0 0 6px}.card .ic{font-size:1.6rem}
+label{display:block;font-weight:600;font-size:.9rem;margin:10px 0 4px}
+input[type=text],select,textarea{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font:inherit}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.chip{padding:8px 14px;border-radius:99px;border:1px solid var(--bd);background:var(--card);color:var(--tx);cursor:pointer;font:inherit}
+.chip.sel{background:var(--a);color:#fff;border-color:var(--a)}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px}
+th,td{padding:10px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:middle}
+.bar{height:10px;border-radius:9px;background:var(--bd);overflow:hidden;min-width:70px}.bar i{display:block;height:100%;background:var(--a2)}
+.chat{display:flex;flex-direction:column;gap:10px;max-height:380px;overflow-y:auto;padding:4px 2px 10px}
+.msg{padding:10px 14px;border-radius:14px;max-width:85%;white-space:pre-wrap}
+.msg.me{align-self:flex-end;background:var(--a);color:#fff}
+.msg.ai{align-self:flex-start;background:var(--card);border:1px solid var(--bd)}
+.row{display:flex;gap:8px}
+.note{font-size:.82rem;color:var(--mut);margin-top:12px}
+.steps{list-style:none;padding:0;margin:14px 0}
+.steps li{display:flex;gap:12px;padding:14px;border:1px solid var(--bd);border-radius:var(--r);background:var(--card);margin-bottom:10px}
+.steps input{width:20px;height:20px;accent-color:var(--a);flex:none;margin-top:3px}
+.steps li.done{opacity:.55;text-decoration:line-through}
+#fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:5;font-size:1rem;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+#panel{position:fixed;right:16px;bottom:calc(70px + env(safe-area-inset-bottom,0px));width:min(320px,calc(100vw - 32px));z-index:5;display:none;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+#panel.on{display:block}
+.sw{display:flex;gap:8px;flex-wrap:wrap}.sw button{width:30px;height:30px;border-radius:50%;border:2px solid var(--bd);cursor:pointer}
+input[type=color]{width:100%;height:36px;border:1px solid var(--bd);border-radius:10px;background:none;padding:2px}
+.edit [data-e]{outline:2px dashed var(--a2);outline-offset:3px;border-radius:4px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo" data-e>🧭 Trade <span>Navigator</span></div>
+  <nav id="nav"></nav>
+</header>
+<main id="main">
+
+<section class="view" id="home">
+  <div class="hero">
+    <h1 data-e>Explore. Connect. Trade.</h1>
+    <p data-e>Trade Navigator helps first-time exporters choose a market, understand the paperwork and build a step-by-step plan to go international.</p>
+    <a class="btn" href="#explorer">Start exploring →</a>
+  </div>
+  <div class="grid">
+    <div class="card"><div class="ic">🌍</div><h3>Market Explorer</h3><div data-e>Enter your product and pick promising markets.</div></div>
+    <div class="card"><div class="ic">🤖</div><h3>AI Trade Assistant</h3><div data-e>Ask questions and get clear next steps.</div></div>
+    <div class="card"><div class="ic">⚖️</div><h3>Market Comparison</h3><div data-e>See demand, ease of entry and logistics side by side.</div></div>
+    <div class="card"><div class="ic">📦</div><h3>Export Guide</h3><div data-e>Documents, requirements and logistics explained simply.</div></div>
+    <div class="card"><div class="ic">🗺️</div><h3>My Business Roadmap</h3><div data-e>A personal checklist for entering a foreign market.</div></div>
+  </div>
+  <div class="card" style="margin-top:20px"><h3>Our mission</h3><div data-e>Make international trade understandable for young entrepreneurs, small businesses and anyone who wants to sell beyond their borders. Founded by an independent student entrepreneur from Kazakhstan.</div></div>
+</section>
+
+<section class="view" id="explorer">
+  <h2>Market Explorer</h2><p class="sub">Tell us what you want to sell and where you are based.</p>
+  <div class="card">
+    <label for="prod">Product</label><input type="text" id="prod" placeholder="e.g. wool blankets, honey, software">
+    <label for="orig">Country of origin</label><input type="text" id="orig" value="Kazakhstan">
+    <label>Potential markets (tap to select)</label>
+    <div class="chips" id="chips"></div>
+    <div class="row"><a class="btn" href="#compare">Compare selected →</a><a class="btn alt" href="#roadmap">Build my roadmap</a></div>
+  </div>
+</section>
+
+<section class="view" id="assistant">
+  <h2>AI Trade Assistant</h2><p class="sub">Ask about documents, Incoterms, payments, certificates or logistics.</p>
+  <div class="card">
+    <div class="chat" id="chat"></div>
+    <div class="chips" id="qs"></div>
+    <div class="row"><input type="text" id="q" placeholder="Type your question…"><button class="btn" id="send">Send</button></div>
+    <div class="note">This assistant gives general educational guidance, not legal or customs advice. Always confirm requirements with the customs authority of your destination country.</div>
+  </div>
+</section>
+
+<section class="view" id="compare">
+  <h2>Market Comparison</h2><p class="sub" id="cmpsub"></p>
+  <div class="card scroll"><table id="cmp"></table></div>
+  <div class="note">Scores (1–5, higher is better) are illustrative sample data for demonstration. Replace them with real research for your product.</div>
+</section>
+
+<section class="view" id="guide">
+  <h2>Export Guide</h2><p class="sub">The essentials every exporter should know.</p>
+  <div class="grid" id="gd"></div>
+</section>
+
+<section class="view" id="roadmap">
+  <h2>My Business Roadmap</h2><p class="sub" id="rmsub"></p>
+  <ul class="steps" id="steps"></ul>
+  <div class="note">Tick steps as you complete them. Progress: <b id="prog">0%</b></div>
+</section>
+
+</main>
+
+<button class="btn" id="fab">🎨 Customize</button>
+<div class="card" id="panel">
+  <h3 style="margin-top:0">Make it yours</h3>
+  <label>Main color</label>
+  <div class="sw" id="sw1"></div>
+  <input type="color" id="c1" value="#0f8b8d">
+  <label>Second color</label>
+  <div class="sw" id="sw2"></div>
+  <input type="color" id="c2" value="#f2a541">
+  <label for="font">Font</label>
+  <select id="font">
+    <option value='system-ui,-apple-system,"Segoe UI",Roboto,sans-serif'>Modern</option>
+    <option value='Georgia,"Times New Roman",serif'>Elegant serif</option>
+    <option value='"Trebuchet MS","Comic Sans MS",system-ui,sans-serif'>Friendly</option>
+    <option value='ui-monospace,Menlo,Consolas,monospace'>Tech mono</option>
+  </select>
+  <label for="rad">Roundness</label><input type="range" id="rad" min="0" max="28" value="16">
+  <div class="row" style="margin-top:12px">
+    <button class="btn alt" id="dark">🌓 Light/Dark</button>
+    <button class="btn alt" id="ed">✏️ Edit text</button>
+  </div>
+  <div class="note">Tip: in “Edit text” mode tap any dashed text to rewrite it. Text edits are not saved after you close the page.</div>
+</div>
+
+<script>
+(function(){
+var $=function(s){return document.querySelector(s)},root=document.documentElement;
+var VIEWS=[["home","Home"],["explorer","Market Explorer"],["assistant","AI Trade Assistant"],["compare","Market Comparison"],["guide","Export Guide"],["roadmap","My Roadmap"]];
+var MK={
+"Germany":[5,3,3,2,"Largest EU economy; high quality standards."],
+"Turkey":[4,4,4,3,"Close neighbour region with growing demand."],
+"UAE":[4,5,4,3,"Re-export hub; low tariffs and free zones."],
+"China":[5,2,3,1,"Huge demand but tough competition and rules."],
+"Uzbekistan":[3,5,5,4,"Easy neighbour market with simple logistics."],
+"Hungary":[3,4,3,4,"EU entry point in Central Europe."],
+"USA":[5,2,2,2,"Big market; strict labelling and compliance."],
+"Russia":[4,4,5,2,"Large nearby market; check current regulations."]
+};
+var sel={};
+var store={get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+
+/* nav + routing */
+$("#nav").innerHTML=VIEWS.map(function(v){return '<a href="#'+v[0]+'" data-v="'+v[0]+'">'+v[1]+'</a>'}).join("");
+function route(){
+  var h=(location.hash||"#home").slice(1);if(!VIEWS.some(function(v){return v[0]===h}))h="home";
+  document.querySelectorAll(".view").forEach(function(e){e.classList.toggle("on",e.id===h)});
+  document.querySelectorAll("#nav a").forEach(function(a){a.classList.toggle("on",a.dataset.v===h)});
+  if(h==="compare")renderCompare();if(h==="roadmap")renderRoadmap();
+  window.scrollTo(0,0);
+}
+window.addEventListener("hashchange",route);
+
+/* explorer */
+function renderChips(){
+  $("#chips").innerHTML=Object.keys(MK).map(function(k){return '<button class="chip'+(sel[k]?' sel':'')+'" data-k="'+k+'">'+k+'</button>'}).join("");
+}
+$("#chips").addEventListener("click",function(e){var k=e.target.dataset.k;if(!k)return;sel[k]=!sel[k];renderChips()});
+renderChips();
+function picked(){var p=Object.keys(sel).filter(function(k){return sel[k]});return p.length?p:["Turkey","UAE","Germany"]}
+
+/* compare */
+function renderCompare(){
+  var p=picked(),prod=$("#prod").value.trim();
+  $("#cmpsub").textContent=(prod?'Markets for “'+prod+'”':'Sample markets')+' — '+p.join(", ");
+  var H=["Market","Demand","Ease of entry","Logistics","Low competition","Notes"];
+  function bar(n){return '<div class="bar"><i style="width:'+n*20+'%"></i></div>'}
+  $("#cmp").innerHTML='<tr>'+H.map(function(h){return '<th>'+h+'</th>'}).join("")+'</tr>'+p.map(function(k){var m=MK[k];return '<tr><td><b>'+k+'</b></td><td>'+bar(m[0])+'</td><td>'+bar(m[1])+'</td><td>'+bar(m[2])+'</td><td>'+bar(m[3])+'</td><td>'+m[4]+'</td></tr>'}).join("");
+}
+
+/* guide */
+var G=[["📄","Key documents","Commercial invoice, packing list, certificate of origin, transport document (bill of lading, CMR or air waybill) and the export customs declaration."],
+["🏷️","HS code","Every product has a Harmonized System code. It decides duties, taxes and which rules apply. Find yours before you quote a price."],
+["🚢","Incoterms","Rules such as EXW, FOB and DAP define who pays for transport and insurance and where risk passes to the buyer."],
+["✅","Certificates & standards","Food, cosmetics, electronics and textiles often need quality, safety or phytosanitary certificates in the destination country."],
+["💳","Getting paid","Options include advance payment, letter of credit and bank transfer after delivery. New exporters often start with partial prepayment."],
+["🚛","Logistics","Compare road, rail, sea and air by cost, speed and risk. Insure the cargo and agree on a freight forwarder early."]];
+$("#gd").innerHTML=G.map(function(g){return '<div class="card"><div class="ic">'+g[0]+'</div><h3>'+g[1]+'</h3><div>'+g[2]+'</div></div>'}).join("");
+
+/* roadmap */
+var R=["Define your product and its HS code","Research demand and pick 1–2 target markets","Check import rules, duties and certificates","Calculate full cost and set an export price","Find buyers, distributors or marketplaces","Prepare samples and a short company presentation","Agree on contract, Incoterms and payment terms","Arrange transport, insurance and customs papers","Ship the first order and collect feedback"];
+var done=JSON.parse(store.get("tn-done")||"{}");
+function renderRoadmap(){
+  var prod=$("#prod").value.trim()||"your product",p=picked();
+  $("#rmsub").textContent="Plan for "+prod+" from "+($("#orig").value||"your country")+" to "+p.join(" / ");
+  $("#steps").innerHTML=R.map(function(s,i){return '<li class="'+(done[i]?'done':'')+'"><input type="checkbox" data-i="'+i+'"'+(done[i]?' checked':'')+'><div><b>Step '+(i+1)+'</b><br>'+s+'</div></li>'}).join("");
+  prog();
+}
+function prog(){var n=Object.keys(done).filter(function(k){return done[k]}).length;$("#prog").textContent=Math.round(n/R.length*100)+"%"}
+$("#steps").addEventListener("change",function(e){var i=e.target.dataset.i;if(i==null)return;done[i]=e.target.checked;store.set("tn-done",JSON.stringify(done));renderRoadmap()});
+
+/* assistant */
+var KB=[[/document|paper|invoice|packing/,"You will usually need: a commercial invoice, packing list, certificate of origin, a transport document and an export customs declaration. Some goods need extra certificates too."],
+[/incoterm|exw|fob|dap|cif/,"Incoterms say who pays for freight and insurance and when risk moves to the buyer. Beginners often use FCA or FOB for control, or DAP to offer a simple all-in price."],
+[/pay|money|prepay|letter of credit|lc/,"Safer ways to get paid: advance payment (full or partial), a letter of credit, or documents against payment. Avoid shipping large orders on trust alone."],
+[/certif|standard|halal|organic|phyto|quality/,"Check the destination country’s import rules for your HS code. Food needs safety or phytosanitary papers; EU markets often require CE or similar marks for other goods."],
+[/logist|ship|transport|freight|deliver/,"Compare road, rail, sea and air on cost and speed. Ask two or three freight forwarders for quotes and insure the cargo."],
+[/market|country|where|which/,"Look at demand, how easy entry is, logistics and competition. Open Market Comparison to see sample scores, then test one or two markets first."],
+[/price|cost|margin/,"Add product cost, packaging, transport, insurance, duties and your margin, then compare with local prices. Always calculate the landed cost for the buyer."],
+[/start|begin|first|roadmap|plan/,"Start with your HS code, pick one target market, check import rules, set an export price, then find a buyer. The My Roadmap page has a full checklist."]];
+function ai(t){var m=$("#chat"),d=document.createElement("div");d.className="msg ai";d.textContent=t;m.appendChild(d);m.scrollTop=m.scrollHeight}
+function ask(q){
+  if(!q.trim())return;var m=$("#chat"),d=document.createElement("div");d.className="msg me";d.textContent=q;m.appendChild(d);
+  var l=q.toLowerCase(),a=null,c=Object.keys(MK).filter(function(k){return l.indexOf(k.toLowerCase())>-1});
+  for(var i=0;i<KB.length;i++){if(KB[i][0].test(l)){a=KB[i][1];break}}
+  if(c.length){a=(a?a+"\n\n":"")+c.map(function(k){return k+": "+MK[k][4]}).join("\n")}
+  ai(a||"I can help with documents, Incoterms, payments, certificates, logistics, pricing and choosing a market. Try one of the quick questions below.");
+}
+$("#qs").innerHTML=["What documents do I need?","Which market should I start with?","How do I get paid safely?","What are Incoterms?"].map(function(s){return '<button class="chip">'+s+'</button>'}).join("");
+$("#qs").addEventListener("click",function(e){if(e.target.classList.contains("chip"))ask(e.target.textContent)});
+$("#send").addEventListener("click",function(){var i=$("#q");ask(i.value);i.value=""});
+$("#q").addEventListener("keydown",function(e){if(e.key==="Enter"){ask(this.value);this.value=""}});
+ai("Hi! I’m your Trade Assistant. Tell me what you want to export or ask a question about the process.");
+
+/* customize */
+var PAL=["#0f8b8d","#e4572e","#6c4ab6","#2e86de","#e84393","#2d9d5b","#f2a541","#1d2330"];
+function swatches(id,key,input){
+  var el=$(id);el.innerHTML=PAL.map(function(c){return '<button style="background:'+c+'" data-c="'+c+'" aria-label="'+c+'"></button>'}).join("");
+  el.addEventListener("click",function(e){var c=e.target.dataset.c;if(c)setC(key,c,input)});
+}
+function setC(key,c,input){root.style.setProperty(key,c);$(input).value=c;store.set("tn"+key,c)}
+swatches("#sw1","--a","#c1");swatches("#sw2","--a2","#c2");
+$("#c1").addEventListener("input",function(){setC("--a",this.value,"#c1")});
+$("#c2").addEventListener("input",function(){setC("--a2",this.value,"#c2")});
+$("#font").addEventListener("change",function(){root.style.setProperty("--f",this.value);store.set("tn-f",this.value)});
+$("#rad").addEventListener("input",function(){root.style.setProperty("--r",this.value+"px");store.set("tn-r",this.value)});
+$("#fab").addEventListener("click",function(){$("#panel").classList.toggle("on")});
+$("#dark").addEventListener("click",function(){var d=root.getAttribute("data-theme")==="dark"||(!root.getAttribute("data-theme")&&matchMedia("(prefers-color-scheme: dark)").matches);root.setAttribute("data-theme",d?"light":"dark")});
+$("#ed").addEventListener("click",function(){var on=document.body.classList.toggle("edit");document.querySelectorAll("[data-e]").forEach(function(e){e.contentEditable=on?"true":"false"});this.textContent=on?"✅ Done editing":"✏️ Edit text"});
+[["tn--a","--a","#c1"],["tn--a2","--a2","#c2"]].forEach(function(x){var v=store.get(x[0]);if(v)setC(x[1],v,x[2])});
+var f=store.get("tn-f");if(f){root.style.setProperty("--f",f);$("#font").value=f}
+var r=store.get("tn-r");if(r){root.style.setProperty("--r",r+"px");$("#rad").value=r}
+route();
+})();
+</script>
+</body>
+</html>
