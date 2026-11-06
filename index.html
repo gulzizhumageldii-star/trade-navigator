@@ -106,6 +106,32 @@ input[type=color]{width:100%;height:36px;border:1px solid var(--bd);border-radiu
   <div class="note">Scores (1–5, higher is better) are illustrative sample data for demonstration. Replace them with real research for your product.</div>
 </section>
 
+
+<section class="view" id="tradedata">
+  <h2>Trade Data Explorer</h2>
+  <p class="sub">Explore reported Kazakhstan export statistics by product and destination market.</p>
+  <div class="card">
+    <h3>1. Find a starting HS heading</h3>
+    <label for="hsProduct">Product name</label>
+    <div class="row">
+      <input type="text" id="hsProduct" placeholder="Try honey, wheat or wheat flour">
+      <button class="btn" id="hsFind" type="button">Find heading</button>
+    </div>
+    <div id="hsResult" class="note" aria-live="polite">This starter catalogue covers only a few example products. It is not a complete tariff classification tool.</div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <h3>2. Look up export statistics</h3>
+    <p class="note">Reporter: Kazakhstan · Flow: Exports · Partner markets: selected in Market Explorer</p>
+    <label for="hsCode">HS heading (4 digits)</label>
+    <input type="text" id="hsCode" inputmode="numeric" maxlength="4" value="0409" placeholder="e.g. 0409">
+    <label for="tradeYear">Year</label>
+    <input type="text" id="tradeYear" inputmode="numeric" maxlength="4" value="2023" placeholder="e.g. 2023">
+    <button class="btn" id="loadTradeData" type="button" style="margin-top:12px">Load UN Comtrade data</button>
+    <div id="tradeResults" class="note" aria-live="polite">Choose a product heading and year, then load the available reported data.</div>
+  </div>
+  <p class="note">Source: UN Comtrade public preview API. Preview results are limited and may not contain every reporter, partner, product or year. A missing result is not proof that trade was zero. HS headings shown here are starting points only; confirm the final national tariff classification with the relevant customs authority.</p>
+</section>
+
 <section class="view" id="guide">
   <h2>Export Guide</h2><p class="sub">The essentials every exporter should know.</p>
   <div class="grid" id="gd"></div>
@@ -146,7 +172,7 @@ input[type=color]{width:100%;height:36px;border:1px solid var(--bd);border-radiu
 <script>
 (function(){
 var $=function(s){return document.querySelector(s)},root=document.documentElement;
-var VIEWS=[["home","Home"],["explorer","Market Explorer"],["assistant","AI Trade Assistant"],["compare","Market Comparison"],["guide","Export Guide"],["roadmap","My Roadmap"]];
+var VIEWS=[["home","Home"],["explorer","Market Explorer"],["assistant","AI Trade Assistant"],["compare","Market Comparison"],["tradedata","Trade Data"],["guide","Export Guide"],["roadmap","My Roadmap"]];
 var MK={
 "Germany":[5,3,3,2,"Largest EU economy; high quality standards."],
 "Turkey":[4,4,4,3,"Close neighbour region with growing demand."],
@@ -187,6 +213,78 @@ function renderCompare(){
   function bar(n){return '<div class="bar"><i style="width:'+n*20+'%"></i></div>'}
   $("#cmp").innerHTML='<tr>'+H.map(function(h){return '<th>'+h+'</th>'}).join("")+'</tr>'+p.map(function(k){var m=MK[k];return '<tr><td><b>'+k+'</b></td><td>'+bar(m[0])+'</td><td>'+bar(m[1])+'</td><td>'+bar(m[2])+'</td><td>'+bar(m[3])+'</td><td>'+m[4]+'</td></tr>'}).join("");
 }
+
+
+/* starter HS heading finder + UN Comtrade public preview */
+var HS_STARTER=[
+  {terms:["honey","natural honey"],code:"0409",name:"Natural honey",note:"This heading is for natural honey. Preparations or products mixed with other ingredients may be classified differently."},
+  {terms:["wheat","meslin"],code:"1001",name:"Wheat and meslin",note:"This is the 4-digit heading for wheat and meslin; national tariff lines may add more digits."},
+  {terms:["wheat flour","flour of wheat"],code:"1101",name:"Wheat or meslin flour",note:"This heading is for wheat or meslin flour. Flour made from other grains has different headings."}
+];
+var PARTNER_CODES={"Germany":"276","Turkey":"792","UAE":"784","China":"156","Uzbekistan":"860","Hungary":"348","USA":"842","Russia":"643"};
+function findStarterHS(){
+  var q=$("#hsProduct").value.trim().toLowerCase();
+  var box=$("#hsResult");
+  if(!q){box.textContent="Enter a product name first.";return}
+  var matches=HS_STARTER.filter(function(x){return x.terms.some(function(t){return q===t || q.indexOf(t)>=0})});
+  matches.sort(function(a,b){
+    var al=Math.max.apply(null,a.terms.filter(function(t){return q===t || q.indexOf(t)>=0}).map(function(t){return t.length}));
+    var bl=Math.max.apply(null,b.terms.filter(function(t){return q===t || q.indexOf(t)>=0}).map(function(t){return t.length}));
+    return bl-al;
+  });
+  var hit=matches[0];
+  if(!hit){
+    box.textContent="This product is not in the small starter catalogue. No code has been guessed. A reliable classification needs the exact product composition, processing and use, plus the destination country's tariff schedule.";
+    return;
+  }
+  $("#hsCode").value=hit.code;
+  box.innerHTML="<b>Possible HS heading: "+hit.code+" — "+hit.name+"</b><br>"+hit.note+"<br><b>Important:</b> this is a 4-digit starting heading, not a confirmed national tariff code.";
+}
+$("#hsFind").addEventListener("click",findStarterHS);
+$("#hsProduct").addEventListener("keydown",function(e){if(e.key==="Enter")findStarterHS()});
+function fmtNumber(v,digits){
+  var n=Number(v);
+  if(!Number.isFinite(n))return "Not reported";
+  return new Intl.NumberFormat("en-US",{maximumFractionDigits:digits||0}).format(n);
+}
+function pause(ms){return new Promise(function(resolve){setTimeout(resolve,ms)})}
+$("#loadTradeData").addEventListener("click",async function(){
+  var code=$("#hsCode").value.trim(),year=$("#tradeYear").value.trim(),out=$("#tradeResults"),markets=picked();
+  if(!/^\d{4}$/.test(code)){out.textContent="Enter a 4-digit HS heading, for example 0409.";return}
+  if(!/^\d{4}$/.test(year)||Number(year)<2010||Number(year)>new Date().getFullYear()){out.textContent="Enter a valid year between 2010 and the current year.";return}
+  var valid=markets.filter(function(m){return PARTNER_CODES[m]});
+  if(!valid.length){out.textContent="Select at least one supported destination market in Market Explorer.";return}
+  this.disabled=true;this.textContent="Loading…";
+  out.textContent="Requesting reported export data from UN Comtrade. This may take a few seconds…";
+  var results=[];
+  for(var i=0;i<valid.length;i++){
+    var market=valid[i],partner=PARTNER_CODES[market];
+    var url="https://comtradeapi.un.org/public/v1/preview/C/A/HS?reporterCode=398&partnerCode="+encodeURIComponent(partner)+"&period="+encodeURIComponent(year)+"&cmdCode="+encodeURIComponent(code)+"&flowCode=X";
+    try{
+      var response=await fetch(url,{headers:{Accept:"application/json"}});
+      if(!response.ok)throw new Error("HTTP "+response.status);
+      var payload=await response.json(),rows=Array.isArray(payload.data)?payload.data:[];
+      var record=rows.find(function(r){return String(r.partnerCode)===partner})||rows[0];
+      if(record){
+        results.push({market:market,value:record.primaryValue,weight:record.netWgt,description:record.cmdDesc||"",period:record.period||year});
+      }else{
+        results.push({market:market,empty:true});
+      }
+    }catch(err){
+      results.push({market:market,error:true,detail:err&&err.message?err.message:"Request failed"});
+    }
+    if(i<valid.length-1)await pause(1100);
+  }
+  var rowsHtml=results.map(function(r){
+    if(r.error)return "<tr><td><b>"+r.market+"</b></td><td colspan='2'>Could not retrieve data. Check connection or try again later.</td></tr>";
+    if(r.empty)return "<tr><td><b>"+r.market+"</b></td><td colspan='2'>No reported record for this selection. This does not mean exports were zero.</td></tr>";
+    var val=r.value==null?"Not reported":"US$ "+fmtNumber(r.value,0);
+    var wt=r.weight==null?"Not reported":fmtNumber(r.weight,0)+" kg";
+    return "<tr><td><b>"+r.market+"</b></td><td>"+val+"</td><td>"+wt+"</td></tr>";
+  }).join("");
+  out.innerHTML="<p><b>Kazakhstan exports · HS "+code+" · "+year+"</b></p><div class='scroll'><table><tr><th>Destination</th><th>Trade value</th><th>Net weight</th></tr>"+rowsHtml+"</table></div><p class='note'>Values are shown only when reported by UN Comtrade. Units: trade value in US dollars; net weight in kilograms. The public preview API is limited and may return incomplete coverage.</p><p><a href='https://comtradeapi.un.org/' target='_blank' rel='noopener'>UN Comtrade data source</a></p>";
+  this.disabled=false;this.textContent="Load UN Comtrade data";
+});
 
 /* guide */
 var G=[["📄","Key documents","Commercial invoice, packing list, certificate of origin, transport document (bill of lading, CMR or air waybill) and the export customs declaration."],
