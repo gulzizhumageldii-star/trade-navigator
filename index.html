@@ -259,7 +259,7 @@ $("#loadTradeData").addEventListener("click",async function(){
   var results=[];
   for(var i=0;i<valid.length;i++){
     var market=valid[i],partner=PARTNER_CODES[market];
-    var url="https://comtradeapi.un.org/public/v1/preview/C/A/HS?reportercode=398&partnerCode="+encodeURIComponent(partner)+"&period="+encodeURIComponent(year)+"&cmdCode="+encodeURIComponent(code)+"&flowCode=X";
+var url="https://comtradeapi.un.org/public/v1/preview/C/A/HS?reportercode=398&partnerCode="+encodeURIComponent(partner)+"&period="+encodeURIComponent(year)+"&cmdCode="+encodeURIComponent(code)+"&flowCode=X";
     try{
       var response=await fetch(url,{headers:{Accept:"application/json"}});
       if(!response.ok)throw new Error("HTTP "+response.status);
