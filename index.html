@@ -290,18 +290,25 @@ if(payload.error) {
 }
 
 var rows=Array.isArray(payload.data)?payload.data:[];
+var record=rows.find(function(r){
+  return String(r.partnerCode)===partner;
+});
 
-      if(!response.ok)throw new Error("HTTP "+response.status);
-      var record=rows.find(function(r){return String(r.partnerCode)===partner})||rows[0];
-      if(record){
-        results.push({market:market,value:record.primaryValue,weight:record.netWgt,description:record.cmdDesc||"",period:record.period||year});
-      }else{
+if(record && record.isReported === true){
+  results.push({
+    market:market,
+    value:record.primaryValue,
+    weight:record.netWgt,
+    description:record.cmdDesc||"",
+    period:record.period||year
+  });
+}else{
         results.push({market:market,empty:true});
       }
     }catch(err){
       results.push({market:market,error:true,detail:err&&err.message?err.message:"Request failed"});
     }
-    if(i<valid.length-1)await pause(3000);
+    if(i<valid.length-1)await pause(5000);
   }
   var rowsHtml=results.map(function(r){
     if(r.error)return "<tr><td><b>"+r.market+"</b></td><td colspan='2'>"+String(r.detail||"Unknown error").replace(/</g,"&lt;")+"</td></tr>";
