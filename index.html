@@ -261,7 +261,36 @@ $("#loadTradeData").addEventListener("click",async function(){
     var market=valid[i],partner=PARTNER_CODES[market];
 var url="https://comtradeapi.un.org/public/v1/preview/C/A/HS?reportercode=398&partnerCode="+encodeURIComponent(partner)+"&period="+encodeURIComponent(year)+"&cmdCode="+encodeURIComponent(code)+"&flowCode=X";
     try{
-      var response=await fetch("https://trade-navigator-api.gulzizhumageldii.workers.dev/?"+new URL(url).searchParams.toString(),{headers:{Accept:"application/json"}}); var raw=await response.text(); var payload; try {   payload=JSON.parse(raw); } catch(parseError) {   throw new Error("HTTP "+response.status+"; response: "+raw.slice(0,300)); } if(!response.ok)throw new Error("HTTP "+response.status+"; "+JSON.stringify(payload).slice(0,400)); if(payload.error)throw new Error(String(payload.error)); var rows=Array.isArray(payload.data)?payload.data:[]; var raw=await response.text(); var payload; try {   payload=JSON.parse(raw); } catch(parseError) {   throw new Error("HTTP "+response.status+"; response: "+raw.slice(0,300)); } if(!response.ok)throw new Error("HTTP "+response.status+"; "+JSON.stringify(payload).slice(0,400)); if(payload.error)throw new Error(String(payload.error)); var rows=Array.isArray(payload.data)?payload.data:[];
+     
+var response=await fetch(
+  "https://trade-navigator-api.gulzizhumageldii.workers.dev/?"+
+  new URL(url).searchParams.toString(),
+  {headers:{Accept:"application/json"}}
+);
+
+var raw=await response.text();
+var payload;
+
+try {
+  payload=JSON.parse(raw);
+} catch(parseError) {
+  throw new Error(
+    "HTTP "+response.status+"; response: "+raw.slice(0,300)
+  );
+}
+
+if(!response.ok) {
+  throw new Error(
+    "HTTP "+response.status+"; "+JSON.stringify(payload).slice(0,400)
+  );
+}
+
+if(payload.error) {
+  throw new Error(String(payload.error));
+}
+
+var rows=Array.isArray(payload.data)?payload.data:[];
+
       if(!response.ok)throw new Error("HTTP "+response.status);
       var payload=await response.json(),rows=Array.isArray(payload.data)?payload.data:[];
       var record=rows.find(function(r){return String(r.partnerCode)===partner})||rows[0];
