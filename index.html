@@ -294,30 +294,43 @@ var record=rows.find(function(r){
   return String(r.partnerCode)===partner;
 });
 
-if(record && record.isReported === true){
+if(record && (record.isReported === true || record.isAggregate === true)){
   results.push({
     market:market,
     value:record.primaryValue,
     weight:record.netWgt,
+    reported:record.isReported === true,
+    aggregate:record.isAggregate === true,
     description:record.cmdDesc||"",
     period:record.period||year
   });
 }else{
-        results.push({market:market,empty:true});
-      }
-    }catch(err){
+  results.push({market:market,empty:true});
+}
+}catch(err){
       results.push({market:market,error:true,detail:err&&err.message?err.message:"Request failed"});
     }
     if(i<valid.length-1)await pause(5000);
   }
   var rowsHtml=results.map(function(r){
-    if(r.error)return "<tr><td><b>"+r.market+"</b></td><td colspan='2'>"+String(r.detail||"Unknown error").replace(/</g,"&lt;")+"</td></tr>";
-    if(r.empty)return "<tr><td><b>"+r.market+"</b></td><td colspan='2'>No reported record for this selection. This does not mean exports were zero.</td></tr>";
-    var val=r.value==null?"Not reported":"US$ "+fmtNumber(r.value,0);
-    var wt=r.weight==null?"Not reported":fmtNumber(r.weight,0)+" kg";
-    return "<tr><td><b>"+r.market+"</b></td><td>"+val+"</td><td>"+wt+"</td></tr>";
-  }).join("");
-  out.innerHTML="<p><b>Kazakhstan exports · HS "+code+" · "+year+"</b></p><div class='scroll'><table><tr><th>Destination</th><th>Trade value</th><th>Net weight</th></tr>"+rowsHtml+"</table></div><p class='note'>Values are shown only when reported by UN Comtrade. Units: trade value in US dollars; net weight in kilograms. The public preview API is limited and may return incomplete coverage.</p><p><a href='https://comtradeapi.un.org/' target='_blank' rel='noopener'>UN Comtrade data source</a></p>";
+  if(r.error)return "<tr><td><b>"+r.market+"</b></td><td colspan='2'>"+String(r.detail||"Unknown error").replace(/</g,"&lt;")+"</td></tr>";
+
+  if(r.empty)return "<tr><td><b>"+r.market+"</b></td><td colspan='2'>No record returned by UN Comtrade preview. This does not mean exports were zero.</td></tr>";
+
+  var val=r.value==null?"Not reported":"US$ "+fmtNumber(r.value,0);
+  var wt=r.weight==null?"Not reported":fmtNumber(r.weight,0)+" kg";
+
+  var status=r.reported
+    ?"Reported by Kazakhstan"
+    :r.aggregate
+      ?"Aggregate record · not directly reported"
+      :"Status not confirmed";
+
+  var quality=r.weight==null?" · Net weight unavailable":"";
+
+  return "<tr><td><b>"+r.market+"</b></td><td>"+val+"<div class='note'>"+status+quality+"</div></td><td>"+wt+"</td></tr>";
+}).join("");
+  out.innerHTML="<p><b>Kazakhstan exports · HS "+code+" · "+year+"</b></p><div class='scroll'><table><tr><th>Destination</th><th>Trade value</th><th>Net weight</th></tr>"+rowsHtml+"</table></div><p class='note'>Reported records are marked as reported by Kazakhstan. Aggregate records are not marked as directly reported by Kazakhstan and should be treated with caution. Missing values do not mean zero. Units: trade value in US dollars; net weight in kilograms. The public preview API is limited and may return incomplete coverage.</p><p><a href='https://comtradeapi.un.org/' target='_blank' rel='noopener'>UN Comtrade data source</a></p>";
   this.disabled=false;this.textContent="Load UN Comtrade data";
 });
 
